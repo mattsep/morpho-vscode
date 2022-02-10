@@ -182,16 +182,9 @@ repository:
       - include: "#identifier"
 
   anonymous-function:
-    name: meta.function.anonymous.morpho
-    begin: \b(fn)
-    beginCaptures:
+    match: \b(fn)\s*(?=\()
+    captures:
       1: { name: storage.type.function.morpho }
-    end: $
-    patterns:
-      - include: "#comment"
-      - include: "#function-arglist"
-      - include: "#block"
-      - include: "#expression"
 
   call:
     match: \b([[:alpha:]_][[:alnum:]]*)(?=\()
