@@ -1,0 +1,280 @@
+name: morpho
+scopeName: source.morpho
+
+patterns:
+  - include: "#shebang"
+  - include: "#statement"
+
+repository:
+  shebang:
+    name: comment.line.shebang.morpho
+    begin: \A#!
+    end: $
+
+  statement:
+    name: meta.statement.morpho
+    patterns:
+      - include: "#comment"
+      - include: "#function-declaration"
+      - include: "#variable-declaration"
+      - include: "#import-declaration"
+      - include: "#class-declaration"
+      - include: "#class-definition"
+      - include: "#block"
+      - include: "#expression"
+
+  comment:
+    patterns:
+      - name: comment.block.documentation.morpho
+        begin: /\*\*(?!/)
+        end: \*/
+        patterns:
+          - include: "#documentation"
+      - name: comment.block.morpho
+        begin: /\*
+        end: \*/
+      - name: comment.line.double-slash.morpho
+        begin: //
+        end: $
+
+  documentation:
+    patterns:
+      - match: (@(?:author|brief|returns))
+        captures:
+          1: { name: storage.type.other.morpho }
+      - match: >-
+          (?x)
+          (@param(?:\[(?:in|out)\])?)
+          \s+
+          ([[:alpha:]_][[:alnum:]]*)
+        captures:
+          1: { name: storage.type.other.morpho }
+          2: { name: variable.parameter.morpho }
+
+  function-declaration:
+    name: meta.function.morpho
+    begin: >-
+      (?x)
+      \b(fn)
+      \s+
+      ([[:alpha:]_][[:alnum:]]*)
+      \s*
+      (?=\()
+    beginCaptures:
+      1: { name: storage.type.function.morpho }
+      2: { name: entity.name.function.morpho }
+    end: (?<=})
+    patterns:
+      - include: "#comment"
+      - include: "#function-arglist"
+      - include: "#block"
+
+  function-arglist:
+    name: meta.function.arglist.morpho
+    begin: \(
+    end: \)
+    patterns:
+      - name: variable.parameter.morpho
+        match: >-
+          (?x)
+          \s*
+          ([[:alpha:]_][[:alnum:]]*)
+          \s*(?:(,)|(?=//|[=\n\)]))
+      - begin: (=)
+        beginCaptures:
+          1: { name: keyword.operator.morpho }
+        end: (,)|(?=\))
+        endCaptures:
+          1: { name: punctuation.separator.arglist.morpho }
+        patterns:
+          - include: "#expression"
+
+  variable-declaration:
+    begin: >-
+      (?x)
+      \b(var)\s+
+      ([[:alpha:]_][[:alnum:]]*)
+      \s*
+      (=)?
+    beginCaptures:
+      1: { name: storage.type.variable.morpho }
+      2: { name: variable.name.morpho }
+      3: { name: keyword.operator.morpho }
+    end: $
+    patterns:
+      - include: "#expression"
+
+  import-declaration:
+    name: meta.import.declaration.morpho
+    begin: \b(import)\s+(?=[[:alpha:]_][[:alnum:]]*)
+    beginCaptures:
+      1: { name: keyword.control.import.morpho }
+    end: $
+    patterns:
+      - name: keyword.control.import.morpho
+        match: \bas\b
+      - include: "#expression"
+
+  class-declaration:
+    name: meta.class.declaration.morpho
+    begin: >-
+      (?x)
+      \b(class)
+      \s+
+      ([[:alpha:]_][[:alnum:]]*)
+      (?:
+        \s*
+        (?:
+          \b(is)\b
+          |(<)
+        )
+        \s*
+        ([[:alpha:]_][[:alnum:]]*)
+      )?
+      \s*
+      \{
+    beginCaptures:
+      1: { name: storage.type.class.morpho }
+      2: { name: entity.name.class.morpho }
+      3: { name: storage.type.is.morpho }
+      4: { name: storage.type.is.morpho }
+      5: { name: entity.name.class.morpho }
+    end: '}'
+    patterns:
+      - include: "#comment"
+      - include: "#class-function-declaration"
+
+  class-function-declaration:
+    name: meta.class.function.declaration.morpho
+    begin: >-
+      (?x)
+      \b([[:alpha:]_][[:alnum:]]*)
+      \s*
+      (?=\()
+    beginCaptures:
+      1: { name: entity.name.function.morpho }
+    end: (?<=})
+    patterns:
+      - include: "#function-arglist"
+      - include: "#block"
+  
+  block:
+    name: meta.block.morpho
+    begin: '\{'
+    end: '\}'
+    patterns:
+      - include: "#statement"
+  
+  expression:
+    name: meta.expression.morpho
+    patterns:
+      - include: "#comment"
+      - include: "#anonymous-function"
+      - include: "#call"
+      - include: "#grouping"
+      - include: "#list"
+      - include: "#dictionary"
+      - include: "#string"
+      - include: "#number"
+      - include: "#keyword"
+      - include: "#operator"
+      - include: "#constant"
+      - include: "#identifier"
+
+  anonymous-function:
+    name: meta.function.anonymous.morpho
+    begin: \b(fn)
+    beginCaptures:
+      1: { name: storage.type.function.morpho }
+    end: $
+    patterns:
+      - include: "#comment"
+      - include: "#function-arglist"
+      - include: "#block"
+      - include: "#expression"
+
+  call:
+    match: \b([[:alpha:]_][[:alnum:]]*)(?=\()
+    captures:
+      1 : { name: entity.name.function.morpho }
+
+  grouping:
+    name: meta.grouping.morpho
+    begin: \(
+    end: \)
+    patterns:
+      - include: "#expression"
+
+  list:
+    name: meta.list.morpho
+    begin: \[
+    end: \]
+    patterns:
+      - include: "#list-elements"
+
+  list-elements:
+    name: meta.list-elements.morpho
+    patterns:
+      - include: "#expression"
+      - name: punctuation.separator.list.morpho
+        match: (,)|(?=\])
+
+  dictionary:
+    name: meta.dictionary.morpho
+    begin: '{'
+    end: '}'
+    patterns:
+      - include: "#expression"
+      - name: punctuation.value.dictionary.morpho
+        match: \s*(:)\s*
+      - name: punctuation.separator.dictionary.morpho
+        match: \s*(,)?\s*
+
+  string:
+    name: string.quoted.double.morpho
+    begin: '"'
+    end: '"'
+    patterns:
+      - name: constant.character.escape.morpho
+        match: \\.
+
+  number:
+    name: constant.numeric.morpho
+    match: \b(?<!\.)[0-9]+(?:\.[0-9]*)?(?:[eE][-+]?[0-9]+)?
+
+  keyword:
+    patterns:
+      - name: keyword.control.morpho
+        match: >-
+          (?x)
+          \b(
+            if | else | try | catch | switch |
+            for | while | do | in |
+            break | continue | return
+          )\b
+      - name: keyword.default.morpho
+        match: \b(print)\b
+
+  operator:
+    patterns:
+      - name: keyword.default.morpho
+        match: >-
+          (?x)
+          \b(
+            and | or | not | is
+          )\b
+      - name: keyword.operator.morpho
+        match: >-
+          (?x)
+          [-+*/^]
+          | == | !=
+          | <  | >
+          | <= | >=
+  
+  constant:
+    name: constant.language.morpho
+    match: \b(true|false|nil|self|super)\b
+
+  identifier:
+    name: variable.name.morpho
+    match: \b([[:alpha:]_][[:alnum:]]*)\b
