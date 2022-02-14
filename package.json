@@ -2,13 +2,21 @@
     "name": "morpho",
     "displayName": "Morpho",
     "description": "Morpho language support for Visual Studio Code",
-    "version": "0.1.1",
+    "icon": "images/morpho-icon.png",
+    "version": "0.1.2",
     "license": "MIT",
+    "publisher": "mattsep",
     "engines": {
         "vscode": "^1.64.0"
     },
     "categories": [
         "Programming Languages"
+    ],
+    "keywords": [
+        "morpho",
+        "syntax",
+        "highlighting",
+        "coloring"
     ],
     "repository": {
         "type": "git",
